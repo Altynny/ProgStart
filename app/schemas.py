@@ -1,7 +1,8 @@
 from pydantic import BaseModel
 from typing import List, Optional
 
-class UserCreate(BaseModel):
+# Users
+class UserIn(BaseModel):
     username: str
     password: str
 
@@ -12,6 +13,12 @@ class UserOut(BaseModel):
     class Config:
         from_attributes = True
 
+# Auth
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+# Tests
 class Option(BaseModel):
     id: int
     text: str

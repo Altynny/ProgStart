@@ -1,10 +1,10 @@
+from datetime import datetime, timedelta, timezone
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from datetime import datetime, timedelta
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from . import crud
+from . import crud, models
 from .deps import get_db
 
 from .config import settings
@@ -21,9 +21,17 @@ def get_password_hash(password: str) -> str:
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
+def authenticate_user(db: Session, username: str, password: str):
+    user = crud.get_user_by_username(db, username)
+    if not user:
+        return False
+    if not verify_password(password, user.hashed_password):
+        return False
+    return user
+
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     to_encode = data.copy()
-    expire = datetime.now(datetime.timezone.utc) + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     to_encode.update({"exp": expire, "sub": data.get("sub")})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -47,3 +55,10 @@ async def get_current_user(
     if user is None:
         raise credentials_exception
     return user
+
+async def get_current_active_user(
+    current_user: models.User = Depends(get_current_user),
+):
+    if not current_user.is_active:
+        raise HTTPException(status_code=400, detail="Inactive user")
+    return current_user
