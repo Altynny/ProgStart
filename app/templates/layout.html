@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ProgStart - Тестирование по программированию{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <header class="header">
+        <div class="container header-container">
+            <a href="/" class="logo">ProgStart</a>
+            
+            <nav class="nav">
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a href="/" class="nav-link">Главная</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/tests" class="nav-link">Тесты</a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div class="auth-buttons">
+                {% if user %}
+                    <a href="/profile" class="btn btn-outline">{{ user.username }}</a>
+                    <button id="logout-btn" class="btn">Выйти</button>
+                {% else %}
+                    <a href="/login" class="btn btn-outline">Войти</a>
+                    <a href="/register" class="btn">Регистрация</a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; {{ current_year }} ProgStart. Все права защищены.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Функция для выхода из системы
+        document.addEventListener('DOMContentLoaded', function() {
+            const logoutBtn = document.getElementById('logout-btn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', async function() {
+                    try {
+                        const response = await fetch('/users/logout', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            credentials: 'include'
+                        });
+                        
+                        if (response.ok) {
+                            window.location.href = '/';
+                        } else {
+                            alert('Ошибка при выходе из системы');
+                        }
+                    } catch (error) {
+                        console.error('Ошибка:', error);
+                    }
+                });
+            }
+        });
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

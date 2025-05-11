@@ -1,0 +1,32 @@
+{% extends "layout.html" %}
+
+{% block title %}ProgStart - Список тестов{% endblock %}
+
+{% block content %}
+<div class="container tests-list-container">
+    <h1 class="tests-list-title">Доступные тесты</h1>
+    
+    {% if tests %}
+        <div class="tests-grid">
+            {% for test in tests %}
+                <div class="test-card">
+                    <h3 class="test-card-title">{{ test.title }}</h3>
+                    <div class="test-card-description">
+                        {{ test.description or 'Нет описания' }}
+                    </div>
+                    <div class="test-card-info">
+                        <span>Вопросов: {{ test.questions|length }}</span>
+                    </div>
+                    <a href="/tests/{{ test.id }}" class="btn test-card-btn">
+                        Начать тест
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="no-tests">
+            <p>На данный момент тесты отсутствуют</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

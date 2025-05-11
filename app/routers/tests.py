@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Response, Cookie, Request
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
 from .. import crud, schemas, models, auth
 from ..deps import get_db
@@ -9,10 +10,14 @@ from pydantic import BaseModel
 router = APIRouter(prefix="/tests", tags=["tests"])
 
 # Схема для отправки ответов
-class SubmitAnswers(BaseModel):
-    answers: List[dict]  # список пар {question_id: int, selected_option_id: int}
+class Answer(BaseModel):
+    question_id: int
+    selected_option_id: int
 
-@router.get("/", response_model=list[schemas.Test])
+class SubmitAnswers(BaseModel):
+    answers: List[Answer]  # список пар {question_id: int, selected_option_id: int}
+
+@router.get("/", response_model=List[schemas.Test])
 async def list_tests(db: Session = Depends(get_db)):
     """Получение списка всех тестов"""
     return crud.get_tests(db)
@@ -35,39 +40,53 @@ async def get_test(
         key="test_id", 
         value=str(test_id), 
         max_age=1800,  # 30 минут в секундах
-        httponly=True
+        httponly=True,
+        samesite="lax"  # Важно для работы куки в современных браузерах
     )
     
     return test
 
-@router.post("/{test_id}/submit", response_model=schemas.ProgressOut)
+@router.post("/{test_id}/submit")
 async def submit_test(
     test_id: int,
     answers: SubmitAnswers,
-    current_test_id: Optional[str] = Cookie(None),
+    request: Request,
     db: Session = Depends(get_db),
     current_user = Depends(auth.get_current_user)
 ):
     """
     Отправка ответов на тест и проверка результатов
     """
+    # Получаем куки из запроса напрямую
+    cookies = request.cookies
+    current_test_id = cookies.get("test_id")
+    
+    # Вывод отладочной информации
+    print(f"Current test_id from cookie: {current_test_id}")
+    print(f"Test ID from URL: {test_id}")
+    print(f"Answers received: {answers}")
+    
     # Проверяем совпадение test_id из URL с test_id из куки
     if not current_test_id or int(current_test_id) != test_id:
-        raise HTTPException(
-            status_code=400, 
-            detail="Невозможно отправить ответы. Куки теста не установлены или истекли"
+        return JSONResponse(
+            status_code=400,
+            content={"detail": "Невозможно отправить ответы. Куки теста не установлены или истекли"}
         )
     
     # Получаем тест из БД
     test = crud.get_test(db, test_id)
     if not test:
-        raise HTTPException(status_code=404, detail="Тест не найден")
+        return JSONResponse(
+            status_code=404,
+            content={"detail": "Тест не найден"}
+        )
     
     # Проверяем ответы и подсчитываем баллы
     score = 0
     max_score = len(test.questions)
     
-    answer_map = {answer["question_id"]: answer["selected_option_id"] for answer in answers.answers}
+    # Создаем словарь для быстрого поиска
+    answer_map = {answer.question_id: answer.selected_option_id for answer in answers.answers}
     
     # Для каждого вопроса проверяем правильность ответа
     for question in test.questions:
@@ -82,7 +101,7 @@ async def submit_test(
     )
     
     # Возвращаем результат
-    return progress
+    return {"id": progress.id, "test_id": progress.test_id, "score": progress.score}
 
 @router.get("/{test_id}/result", response_model=schemas.ProgressOut)
 async def get_test_result(

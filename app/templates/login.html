@@ -1,0 +1,99 @@
+{% extends "layout.html" %}
+
+{% block title %}ProgStart - Вход в систему{% endblock %}
+
+{% block content %}
+<div class="container auth-page-container">
+    <div class="auth-page-content">
+        <div class="auth-form-container">
+            <h2 class="auth-title">Вход в систему</h2>
+            
+            <div id="auth-error" class="auth-error" style="display: none;"></div>
+            
+            <form id="login-form" class="auth-form">
+                <div class="form-group">
+                    <label for="username">Имя пользователя</label>
+                    <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        required
+                        class="form-control"
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Пароль</label>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        required
+                        class="form-control"
+                    >
+                </div>
+                
+                <input type="hidden" id="next" name="next" value="{{ next }}">
+                
+                <button type="submit" class="btn auth-button">
+                    Войти
+                </button>
+            </form>
+        </div>
+        
+        <div class="auth-alternative">
+            <p>
+                Нет аккаунта?
+                <a href="/register" class="auth-link">
+                    Зарегистрироваться
+                </a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const loginForm = document.getElementById('login-form');
+        const authError = document.getElementById('auth-error');
+        const nextInput = document.getElementById('next');
+        
+        loginForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const next = nextInput.value || '/';
+            
+            // Создаем FormData для отправки
+            const formData = new FormData();
+            formData.append('username', username);
+            formData.append('password', password);
+            
+            try {
+                // Отправляем запрос на сервер
+                const response = await fetch('/token', {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    // Перенаправляем пользователя
+                    window.location.href = next;
+                } else {
+                    const error = await response.json();
+                    authError.textContent = error.detail || 'Ошибка входа';
+                    authError.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                authError.textContent = 'Произошла ошибка при входе';
+                authError.style.display = 'block';
+            }
+        });
+    });
+</script>
+{% endblock %}

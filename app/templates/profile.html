@@ -1,0 +1,58 @@
+{% extends "layout.html" %}
+
+{% block title %}ProgStart - Профиль{% endblock %}
+
+{% block content %}
+<div class="container profile-container">
+    <div class="profile-header">
+        <h1 class="profile-title">Профиль</h1>
+        <div class="profile-info">
+            <div class="user-info">
+                <h2 class="username">{{ user.username }}</h2>
+                <p class="total-score">Всего баллов: {{ total_score }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="profile-content">
+        <h2 class="section-title">Пройденные тесты</h2>
+        
+        {% if progress|length == 0 %}
+            <div class="no-progress">
+                <p>Вы еще не прошли ни одного теста</p>
+                <a href="/tests" class="btn">
+                    Перейти к тестам
+                </a>
+            </div>
+        {% else %}
+            <div class="progress-list">
+                {% for test_id, attempts in progress.items() %}
+                    {% set test = tests[test_id] %}
+                    {% set best_attempt = attempts|sort(attribute='score', reverse=true)|first %}
+                    {% set max_score = test.questions|length %}
+                    
+                    <div class="progress-card">
+                        <h3 class="test-name">{{ test.title }}</h3>
+                        
+                        <div class="progress-details">
+                            <div class="best-score">
+                                <span>Лучший результат:</span>
+                                <strong>{{ best_attempt.score }}/{{ max_score }}</strong>
+                            </div>
+                            
+                            <div class="attempts-count">
+                                <span>Попыток:</span>
+                                <strong>{{ attempts|length }}</strong>
+                            </div>
+                        </div>
+                        
+                        <a href="/tests/{{ test_id }}" class="btn btn-outline retry-btn">
+                            Пройти снова
+                        </a>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

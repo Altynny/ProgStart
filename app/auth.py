@@ -1,12 +1,12 @@
 from datetime import datetime, timedelta, timezone
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi import Depends, HTTPException, status, Cookie, Request
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from fastapi import Depends, HTTPException, status, Cookie, Request
 from sqlalchemy.orm import Session
+from typing import Optional
 from . import crud, models
 from .deps import get_db
-from typing import Optional
 
 from .config import settings
 SECRET_KEY = settings.SECRET_KEY
@@ -38,10 +38,10 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
 
 # Получение токена из куки или заголовка
 async def get_token_from_cookie_or_header(
-    request: Request,
+    request: Request = None,
     token: Optional[str] = Depends(oauth2_scheme),
     access_token: Optional[str] = Cookie(None)
-) -> str:
+) -> Optional[str]:
     # Сначала проверяем заголовок Authorization
     if token:
         return token
@@ -57,8 +57,8 @@ async def get_token_from_cookie_or_header(
     return None
 
 async def get_current_user(
-    db: Session = Depends(get_db),
-    token: str = Depends(get_token_from_cookie_or_header)
+    token: Optional[str] = Depends(get_token_from_cookie_or_header),
+    db: Session = Depends(get_db)
 ):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

@@ -1,0 +1,129 @@
+{% extends "layout.html" %}
+
+{% block title %}ProgStart - Регистрация{% endblock %}
+
+{% block content %}
+<div class="container auth-page-container">
+    <div class="auth-page-content">
+        <div id="register-form-container" class="auth-form-container">
+            <h2 class="auth-title">Регистрация</h2>
+            
+            <div id="auth-error" class="auth-error" style="display: none;"></div>
+            
+            <form id="register-form" class="auth-form">
+                <div class="form-group">
+                    <label for="username">Имя пользователя</label>
+                    <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        required
+                        minlength="3"
+                        class="form-control"
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Пароль</label>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        required
+                        minlength="6"
+                        class="form-control"
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirm-password">Подтверждение пароля</label>
+                    <input
+                        type="password"
+                        id="confirm-password"
+                        name="confirm-password"
+                        required
+                        class="form-control"
+                    >
+                </div>
+                
+                <button type="submit" class="btn auth-button">
+                    Зарегистрироваться
+                </button>
+            </form>
+        </div>
+        
+        <div id="register-success" class="auth-success" style="display: none;">
+            <h2>Регистрация успешна!</h2>
+            <p>Вы будете перенаправлены на страницу входа...</p>
+        </div>
+        
+        <div class="auth-alternative">
+            <p>
+                Уже есть аккаунт?
+                <a href="/login" class="auth-link">
+                    Войти
+                </a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const registerForm = document.getElementById('register-form');
+        const registerFormContainer = document.getElementById('register-form-container');
+        const registerSuccess = document.getElementById('register-success');
+        const authError = document.getElementById('auth-error');
+        
+        registerForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            
+            // Проверяем совпадение паролей
+            if (password !== confirmPassword) {
+                authError.textContent = 'Пароли не совпадают';
+                authError.style.display = 'block';
+                return;
+            }
+            
+            try {
+                // Отправляем запрос на сервер
+                const response = await fetch('/users/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    })
+                });
+                
+                if (response.ok) {
+                    // Показываем сообщение об успехе
+                    registerFormContainer.style.display = 'none';
+                    registerSuccess.style.display = 'block';
+                    
+                    // Перенаправляем на страницу входа через 2 секунды
+                    setTimeout(() => {
+                        window.location.href = '/login';
+                    }, 2000);
+                } else {
+                    const error = await response.json();
+                    authError.textContent = error.detail || 'Ошибка регистрации';
+                    authError.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                authError.textContent = 'Произошла ошибка при регистрации';
+                authError.style.display = 'block';
+            }
+        });
+    });
+</script>
+{% endblock %}
