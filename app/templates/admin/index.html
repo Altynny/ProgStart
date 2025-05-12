@@ -1,0 +1,42 @@
+{% extends "admin/layout.html" %}
+
+{% block admin_title %}Главная - Панель администратора{% endblock %}
+
+{% block admin_page_title %}Обзор системы{% endblock %}
+
+{% block admin_content %}
+<div class="admin-dashboard">
+    <div class="admin-stats-row">
+        <div class="admin-stat-card">
+            <div class="admin-stat-icon">👥</div>
+            <div class="admin-stat-value">{{ users_count }}</div>
+            <div class="admin-stat-label">Пользователей</div>
+            <a href="/admin/users" class="admin-stat-link">Управление пользователями</a>
+        </div>
+        
+        <div class="admin-stat-card">
+            <div class="admin-stat-icon">📝</div>
+            <div class="admin-stat-value">{{ tests_count }}</div>
+            <div class="admin-stat-label">Тестов</div>
+            <a href="/admin/tests" class="admin-stat-link">Управление тестами</a>
+        </div>
+        
+        <div class="admin-stat-card">
+            <div class="admin-stat-icon">📊</div>
+            <div class="admin-stat-value">{{ progress_count }}</div>
+            <div class="admin-stat-label">Пройденных тестов</div>
+        </div>
+    </div>
+    
+    <div class="admin-welcome-card">
+        <h2 class="admin-welcome-title">Добро пожаловать в панель администратора</h2>
+        <p class="admin-welcome-text">
+            Здесь вы можете управлять пользователями и тестами, а также просматривать статистику системы.
+        </p>
+        <div class="admin-quick-actions">
+            <a href="/admin/users" class="btn">Управление пользователями</a>
+            <a href="/admin/tests/create" class="btn btn-success">Создать новый тест</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

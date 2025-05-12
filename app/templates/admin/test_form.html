@@ -1,0 +1,342 @@
+{% extends "admin/layout.html" %}
+
+{% block admin_title %}{% if test %}Редактирование теста{% else %}Создание теста{% endif %} - Панель администратора{% endblock %}
+
+{% block admin_page_title %}{% if test %}Редактирование теста{% else %}Создание теста{% endif %}{% endblock %}
+
+{% block admin_head %}
+<style>
+    /* Дополнительные стили для формы теста */
+    .question-container {
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+        background-color: #f9f9f9;
+    }
+    
+    .question-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    
+    .option-container {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    
+    .option-radio {
+        margin-right: 10px;
+    }
+    
+    .option-input {
+        flex-grow: 1;
+    }
+    
+    .btn-add-option {
+        margin-left: 10px;
+    }
+    
+    .btn-remove-option {
+        margin-left: 10px;
+        color: var(--danger-color);
+        cursor: pointer;
+    }
+    
+    .btn-remove-question {
+        color: var(--danger-color);
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
+
+{% block admin_content %}
+<div class="admin-test-form-container">
+    <form id="test-form" class="admin-form">
+        <div class="admin-form-group">
+            <label for="test-title">Название теста</label>
+            <input type="text" id="test-title" name="title" class="admin-form-control" required value="{{ test.title if test else '' }}">
+        </div>
+        
+        <div class="admin-form-group">
+            <label for="test-description">Описание</label>
+            <textarea id="test-description" name="description" class="admin-form-control" rows="3">{{ test.description if test else '' }}</textarea>
+        </div>
+        
+        <h3>Вопросы</h3>
+        <div id="questions-container">
+            {% if test %}
+                {% for question in test.questions %}
+                    <div class="question-container" data-question-id="{{ question.id }}">
+                        <div class="question-header">
+                            <h4>Вопрос {{ loop.index }}</h4>
+                            <span class="btn-remove-question">&times;</span>
+                        </div>
+                        
+                        <div class="admin-form-group">
+                            <label>Текст вопроса</label>
+                            <input type="text" class="admin-form-control question-text" value="{{ question.text }}" required>
+                        </div>
+                        
+                        <div class="admin-form-group">
+                            <label>Варианты ответов</label>
+                            <div class="options-container">
+                                {% for option in question.options %}
+                                    <div class="option-container" data-option-id="{{ option.id }}">
+                                        <input type="radio" class="option-radio" name="correct_{{ question.id }}" {{ 'checked' if question.correct_option_id == option.id }}>
+                                        <input type="text" class="admin-form-control option-input" value="{{ option.text }}" required>
+                                        {% if loop.index > 2 %}
+                                            <span class="btn-remove-option">&times;</span>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <button type="button" class="btn btn-outline btn-add-option">Добавить вариант</button>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+        
+        <button type="button" id="add-question-btn" class="btn">Добавить вопрос</button>
+        
+        <div class="admin-form-buttons">
+            <a href="/admin/tests" class="btn admin-btn-cancel">Отмена</a>
+            <button type="submit" class="btn btn-success admin-btn-save">Сохранить</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block admin_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const questionsContainer = document.getElementById('questions-container');
+        const addQuestionBtn = document.getElementById('add-question-btn');
+        const testForm = document.getElementById('test-form');
+        
+        // Счетчик для новых вопросов
+        let questionCounter = {{ test.questions|length if test else 0 }};
+        
+        // Функция для добавления нового вопроса
+        function addQuestion() {
+            questionCounter++;
+            
+            const questionId = `new_${questionCounter}`;
+            
+            // Создаем контейнер для вопроса
+            const questionContainer = document.createElement('div');
+            questionContainer.className = 'question-container';
+            questionContainer.dataset.questionId = questionId;
+            
+            // Заголовок вопроса с кнопкой удаления
+            const questionHeader = document.createElement('div');
+            questionHeader.className = 'question-header';
+            questionHeader.innerHTML = `
+                <h4>Вопрос ${questionCounter}</h4>
+                <span class="btn-remove-question">&times;</span>
+            `;
+            
+            // Группа для текста вопроса
+            const questionTextGroup = document.createElement('div');
+            questionTextGroup.className = 'admin-form-group';
+            questionTextGroup.innerHTML = `
+                <label>Текст вопроса</label>
+                <input type="text" class="admin-form-control question-text" required>
+            `;
+            
+            // Группа для вариантов ответов
+            const optionsGroup = document.createElement('div');
+            optionsGroup.className = 'admin-form-group';
+            optionsGroup.innerHTML = `
+                <label>Варианты ответов</label>
+                <div class="options-container">
+                    <div class="option-container">
+                        <input type="radio" class="option-radio" name="correct_${questionId}" checked>
+                        <input type="text" class="admin-form-control option-input" required>
+                    </div>
+                    <div class="option-container">
+                        <input type="radio" class="option-radio" name="correct_${questionId}">
+                        <input type="text" class="admin-form-control option-input" required>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-outline btn-add-option">Добавить вариант</button>
+            `;
+            
+            // Собираем вопрос вместе
+            questionContainer.appendChild(questionHeader);
+            questionContainer.appendChild(questionTextGroup);
+            questionContainer.appendChild(optionsGroup);
+            
+            // Добавляем в контейнер вопросов
+            questionsContainer.appendChild(questionContainer);
+            
+            // Добавляем обработчики событий
+            addQuestionEventListeners(questionContainer);
+        }
+        
+        // Функция для добавления нового варианта ответа
+        function addOption(optionsContainer) {
+            const optionContainer = document.createElement('div');
+            optionContainer.className = 'option-container';
+            
+            // Получаем имя радио-кнопки из первого варианта ответа
+            const firstOption = optionsContainer.querySelector('.option-container');
+            const radioName = firstOption.querySelector('.option-radio').name;
+            
+            optionContainer.innerHTML = `
+                <input type="radio" class="option-radio" name="${radioName}">
+                <input type="text" class="admin-form-control option-input" required>
+                <span class="btn-remove-option">&times;</span>
+            `;
+            
+            optionsContainer.appendChild(optionContainer);
+            
+            // Добавляем обработчик события для кнопки удаления
+            const removeBtn = optionContainer.querySelector('.btn-remove-option');
+            removeBtn.addEventListener('click', function() {
+                optionContainer.remove();
+            });
+        }
+        
+        // Функция для добавления обработчиков событий к элементам вопроса
+        function addQuestionEventListeners(questionContainer) {
+            // Обработчик для кнопки удаления вопроса
+            const removeQuestionBtn = questionContainer.querySelector('.btn-remove-question');
+            removeQuestionBtn.addEventListener('click', function() {
+                questionContainer.remove();
+            });
+            
+            // Обработчик для кнопки добавления варианта ответа
+            const addOptionBtn = questionContainer.querySelector('.btn-add-option');
+            const optionsContainer = questionContainer.querySelector('.options-container');
+            
+            addOptionBtn.addEventListener('click', function() {
+                addOption(optionsContainer);
+            });
+            
+            // Обработчики для кнопок удаления вариантов ответа
+            const removeOptionBtns = questionContainer.querySelectorAll('.btn-remove-option');
+            removeOptionBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    btn.closest('.option-container').remove();
+                });
+            });
+        }
+        
+        // Добавляем обработчики событий к существующим вопросам
+        const existingQuestions = document.querySelectorAll('.question-container');
+        existingQuestions.forEach(questionContainer => {
+            addQuestionEventListeners(questionContainer);
+        });
+        
+        // Обработчик для кнопки добавления вопроса
+        addQuestionBtn.addEventListener('click', addQuestion);
+        
+        // Если нет вопросов, добавляем первый вопрос
+        if (questionCounter === 0) {
+            addQuestion();
+        }
+        
+        // Обработчик отправки формы
+        testForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Собираем данные формы
+            const title = document.getElementById('test-title').value;
+            const description = document.getElementById('test-description').value;
+            
+            // Собираем вопросы
+            const questions = [];
+            const questionContainers = document.querySelectorAll('.question-container');
+            
+            questionContainers.forEach(questionContainer => {
+                const questionId = questionContainer.dataset.questionId;
+                const questionText = questionContainer.querySelector('.question-text').value;
+                
+                // Собираем варианты ответов
+                const options = [];
+                const optionContainers = questionContainer.querySelectorAll('.option-container');
+                let correctOptionIndex = 0;
+                
+                optionContainers.forEach((optionContainer, index) => {
+                    const optionText = optionContainer.querySelector('.option-input').value;
+                    const isCorrect = optionContainer.querySelector('.option-radio').checked;
+                    
+                    if (isCorrect) {
+                        correctOptionIndex = index;
+                    }
+                    
+                    // Добавляем ID варианта, если он есть
+                    const optionId = optionContainer.dataset.optionId;
+                    if (optionId) {
+                        options.push({
+                            id: parseInt(optionId),
+                            text: optionText
+                        });
+                    } else {
+                        options.push({
+                            text: optionText
+                        });
+                    }
+                });
+                
+                // Формируем объект вопроса
+                const question = {
+                    text: questionText,
+                    options: options,
+                    correct_option_index: correctOptionIndex
+                };
+                
+                // Добавляем ID вопроса, если он есть
+                if (questionId && !questionId.startsWith('new_')) {
+                    question.id = parseInt(questionId);
+                }
+                
+                questions.push(question);
+            });
+            
+            // Формируем данные для отправки
+            const testData = {
+                title: title,
+                description: description,
+                questions: questions
+            };
+            
+            // Определяем URL и метод
+            {% if test %}
+                const url = `/admin/tests/{{ test.id }}`;
+                const method = 'PUT';
+            {% else %}
+                const url = '/admin/tests';
+                const method = 'POST';
+            {% endif %}
+            
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testData),
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    // Перенаправляем на страницу со списком тестов
+                    window.location.href = '/admin/tests';
+                } else {
+                    const error = await response.json();
+                    alert(`Ошибка: ${error.detail || 'Произошла ошибка при сохранении теста'}`);
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                alert('Произошла ошибка при сохранении теста');
+            }
+        });
+    });
+</script>
+{% endblock %}

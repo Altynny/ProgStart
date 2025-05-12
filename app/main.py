@@ -7,11 +7,12 @@ from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 from pathlib import Path
 import datetime
-from .database import engine, Base
-from .routers import token, users, tests, progress, pages
+from .database import engine, Base, SessionLocal
+from .routers import token, users, tests, progress, pages, admin
 from .auth import get_current_user
 from .deps import get_db
 from . import crud, models
+from .admin import create_initial_admin
 
 app = FastAPI(title="ProgStart - Платформа тестирования по программированию")
 
@@ -40,7 +41,19 @@ app.state.templates = templates
 app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
 try:
+    # Создаем таблицы в базе данных
     Base.metadata.create_all(bind=engine)
+    
+    # Создаем роль администратора, если ее еще нет
+    db = SessionLocal()
+    try:
+        admin_role = db.query(models.Role).filter(models.Role.name == "admin").first()
+        if not admin_role:
+            admin_role = models.Role(name="admin", description="Администратор системы")
+            db.add(admin_role)
+            db.commit()
+    finally:
+        db.close()
 except OperationalError:
     import logging
     logging.error("Ошибка подключения к базе данных.")
@@ -51,6 +64,7 @@ app.include_router(token.router)  # Роутер для аутентификац
 app.include_router(users.router)  # Роутер для пользователей
 app.include_router(tests.router)  # Роутер для тестов
 app.include_router(progress.router)  # Роутер для прогресса
+app.include_router(admin.router)  # Роутер для админки
 
 @app.middleware("http")
 async def add_global_context(request: Request, call_next):
