@@ -9,9 +9,9 @@ async def is_admin(
     db: Session = Depends(get_db)
 ) -> bool:
     """
-    Проверяет, является ли текущий пользователь администратором
+    Checks if current user is an administrator
     """
-    # Проверяем наличие роли "admin" у пользователя
+    # Check if user has admin role
     for role in current_user.roles:
         if role.name == "admin":
             return True
@@ -23,35 +23,35 @@ async def admin_required(
     db: Session = Depends(get_db)
 ):
     """
-    Middleware для проверки прав администратора
+    Middleware to verify admin permissions
     """
     is_admin_user = await is_admin(current_user, db)
     
     if not is_admin_user:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Недостаточно прав для выполнения данной операции"
+            detail="Insufficient permissions to perform this operation"
         )
     
     return current_user
 
 def create_initial_admin(db: Session, username: str, password: str) -> Optional[models.User]:
     """
-    Создает первого администратора в системе, если он еще не существует
+    Creates the first admin user in the system if it doesn't exist yet
     """
-    # Проверяем, есть ли уже пользователь с таким именем
+    # Check if user already exists
     existing_user = db.query(models.User).filter(models.User.username == username).first()
     if existing_user:
         return None
     
-    # Создаем роль администратора, если она еще не существует
+    # Create admin role if it doesn't exist
     admin_role = db.query(models.Role).filter(models.Role.name == "admin").first()
     if not admin_role:
-        admin_role = models.Role(name="admin", description="Администратор системы")
+        admin_role = models.Role(name="admin", description="System Administrator")
         db.add(admin_role)
         db.flush()
     
-    # Создаем пользователя-администратора
+    # Create admin user
     hashed_pwd = auth.get_password_hash(password)
     admin_user = models.User(username=username, hashed_password=hashed_pwd)
     admin_user.roles.append(admin_role)

@@ -17,13 +17,13 @@ async def login(
     db: Session = Depends(get_db)
 ) -> schemas.Token:
     """
-    Вход в систему (получение токена доступа)
+    Login (get access token)
     """
     user = authenticate_user(db, form_data.username, form_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Неверное имя пользователя или пароль",
+            detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -31,7 +31,7 @@ async def login(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
     
-    # Устанавливаем куки с токеном доступа
+    # Set access token cookie
     response.set_cookie(
         key="access_token", 
         value=f"Bearer {access_token}", 

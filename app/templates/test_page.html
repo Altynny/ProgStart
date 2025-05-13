@@ -2,12 +2,24 @@
 
 {% block title %}{{ test.title }} - ProgStart{% endblock %}
 
+{% block head %}
+<style>
+    /* Add styling for multiline question text */
+    .question-text {
+        white-space: pre-wrap; /* Preserves whitespace and line breaks */
+        font-size: 18px;
+        margin-bottom: 20px;
+        line-height: 1.5;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container test-page-container">
     <div class="test-header">
         <h1 class="test-title">{{ test.title }}</h1>
         <p class="test-progress">
-            <span id="current-question">1</span> из <span id="total-questions">{{ test.questions|length }}</span>
+            <span id="current-question">1</span> of <span id="total-questions">{{ test.questions|length }}</span>
         </p>
     </div>
     
@@ -16,7 +28,7 @@
             {% for question in test.questions %}
                 <div class="question-card" id="question-{{ loop.index }}" style="{% if loop.index > 1 %}display: none;{% endif %}">
                     <div class="question-header">
-                        <span class="question-number">Вопрос {{ loop.index }}</span>
+                        <span class="question-number">Question {{ loop.index }}</span>
                     </div>
                     
                     <h3 class="question-text">{{ question.text }}</h3>
@@ -42,15 +54,15 @@
             
             <div class="navigation-buttons">
                 <button type="button" id="prev-btn" class="btn btn-outline nav-btn" disabled>
-                    Назад
+                    Previous
                 </button>
                 
                 <button type="button" id="next-btn" class="btn nav-btn">
-                    Далее
+                    Next
                 </button>
                 
                 <button type="button" id="submit-btn" class="btn btn-success nav-btn" style="display: none;">
-                    Завершить тест
+                    Finish Test
                 </button>
             </div>
             
@@ -59,7 +71,7 @@
                     <div 
                         class="progress-dot {% if loop.index == 1 %}current{% endif %}" 
                         data-question="{{ loop.index }}"
-                        title="Вопрос {{ loop.index }}"
+                        title="Question {{ loop.index }}"
                     ></div>
                 {% endfor %}
             </div>
@@ -67,13 +79,13 @@
     </div>
     
     <div id="test-result" class="test-result-container" style="display: none;">
-        <h1 class="test-result-title">Результаты теста</h1>
+        <h1 class="test-result-title">Test Results</h1>
         
         <div class="test-result-card">
             <h2 class="test-name">{{ test.title }}</h2>
             <div class="result-info">
                 <p class="result-score">
-                    Ваш результат: <span id="score">0</span> из {{ test.questions|length }}
+                    Your score: <span id="score">0</span> out of {{ test.questions|length }}
                 </p>
                 <p class="result-percentage" id="percentage">
                     (0%)
@@ -82,10 +94,10 @@
             
             <div class="result-actions">
                 <button id="reset-btn" class="btn btn-outline">
-                    Пройти тест снова
+                    Take Test Again
                 </button>
                 <a href="/tests" class="btn">
-                    К списку тестов
+                    Back to Tests
                 </a>
             </div>
         </div>
@@ -96,7 +108,7 @@
 {% block scripts %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Получаем все необходимые элементы
+        // Get all necessary elements
         const form = document.getElementById('test-form');
         const testId = form.dataset.testId;
         const questions = document.querySelectorAll('.question-card');
@@ -112,19 +124,19 @@
         const percentageSpan = document.getElementById('percentage');
         const resetBtn = document.getElementById('reset-btn');
         
-        // Текущий вопрос
+        // Current question
         let currentQuestion = 1;
         
-        // Ответы пользователя
+        // User answers
         const answers = {};
         
-        // Функция для проверки, выбран ли ответ для текущего вопроса
+        // Function to check if current question is answered
         function isCurrentQuestionAnswered() {
             const questionId = questions[currentQuestion - 1].querySelector('input').dataset.questionId;
             return answers[questionId] !== undefined;
         }
         
-        // Функция для обновления состояния кнопок навигации
+        // Function to update navigation buttons state
         function updateNavButtons() {
             prevBtn.disabled = currentQuestion === 1;
             
@@ -132,7 +144,7 @@
                 nextBtn.style.display = 'none';
                 submitBtn.style.display = 'block';
                 
-                // Проверяем, все ли вопросы отвечены
+                // Check if all questions are answered
                 let allAnswered = true;
                 for (let i = 0; i < totalQuestions; i++) {
                     const inputs = questions[i].querySelectorAll('input');
@@ -151,64 +163,64 @@
             }
         }
         
-        // Функция для перехода к вопросу
+        // Function to navigate to a question
         function goToQuestion(questionNumber) {
-            // Скрываем все вопросы
+            // Hide all questions
             for (let i = 0; i < questions.length; i++) {
                 questions[i].style.display = 'none';
                 progressDots[i].classList.remove('current');
             }
             
-            // Показываем выбранный вопрос
+            // Show selected question
             questions[questionNumber - 1].style.display = 'block';
             progressDots[questionNumber - 1].classList.add('current');
             
-            // Обновляем текущий вопрос
+            // Update current question
             currentQuestion = questionNumber;
             currentQuestionSpan.textContent = currentQuestion;
             
-            // Обновляем кнопки навигации
+            // Update navigation buttons
             updateNavButtons();
             
-            // Прокручиваем страницу вверх
+            // Scroll to top
             window.scrollTo(0, 0);
         }
         
-        // Обработчик выбора ответа
+        // Option selection handler
         form.addEventListener('change', function(e) {
             if (e.target.matches('input[type="radio"]')) {
                 const questionId = e.target.dataset.questionId;
                 const optionId = parseInt(e.target.value);
                 
-                // Сохраняем ответ
+                // Save answer
                 answers[questionId] = optionId;
                 
-                // Отмечаем вопрос как отвеченный
+                // Mark question as answered
                 const questionIndex = Array.from(questions).findIndex(q => 
                     q.querySelector('input').dataset.questionId === questionId
                 );
                 progressDots[questionIndex].classList.add('answered');
                 
-                // Обновляем состояние кнопок
+                // Update buttons state
                 updateNavButtons();
             }
         });
         
-        // Обработчик кнопки "Далее"
+        // Next button handler
         nextBtn.addEventListener('click', function() {
             if (currentQuestion < totalQuestions) {
                 goToQuestion(currentQuestion + 1);
             }
         });
         
-        // Обработчик кнопки "Назад"
+        // Previous button handler
         prevBtn.addEventListener('click', function() {
             if (currentQuestion > 1) {
                 goToQuestion(currentQuestion - 1);
             }
         });
         
-        // Обработчик клика по точкам прогресса
+        // Progress dots click handler
         document.getElementById('questions-progress').addEventListener('click', function(e) {
             if (e.target.matches('.progress-dot')) {
                 const questionNumber = parseInt(e.target.dataset.question);
@@ -216,75 +228,75 @@
             }
         });
         
-        // Обработчик отправки теста
+        // Submit test handler
         submitBtn.addEventListener('click', async function() {
-            // Преобразуем ответы в формат для отправки
+            // Transform answers for submission
             const answersArray = Object.entries(answers).map(([questionId, optionId]) => ({
                 question_id: parseInt(questionId),
                 selected_option_id: optionId
             }));
             
             try {
-                console.log('Отправляем ответы:', JSON.stringify({ answers: answersArray }));
+                console.log('Submitting answers:', JSON.stringify({ answers: answersArray }));
                 
-                // Отправляем ответы на сервер
+                // Send answers to server
                 const response = await fetch(`/tests/${testId}/submit`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ answers: answersArray }),
-                    credentials: 'include'  // Важно для отправки куки
+                    credentials: 'include'  // Important for cookies
                 });
                 
                 const responseData = await response.json();
-                console.log('Ответ от сервера:', responseData);
+                console.log('Server response:', responseData);
                 
                 if (response.ok) {
-                    // Показываем результаты
+                    // Show results
                     scoreSpan.textContent = responseData.score;
                     const percentage = Math.round((responseData.score / totalQuestions) * 100);
                     percentageSpan.textContent = `(${percentage}%)`;
                     
-                    // Скрываем тест и показываем результаты
+                    // Hide test and show results
                     testContent.style.display = 'none';
                     testResult.style.display = 'block';
                 } else {
-                    alert(`Ошибка: ${responseData.detail || 'Произошла ошибка при отправке ответов'}`);
+                    alert(`Error: ${responseData.detail || 'An error occurred while submitting answers'}`);
                 }
             } catch (error) {
-                console.error('Ошибка при отправке ответов:', error);
-                alert('Произошла ошибка при отправке ответов. Проверьте консоль для деталей.');
+                console.error('Error submitting answers:', error);
+                alert('An error occurred while submitting answers. Check console for details.');
             }
         });
         
-        // Обработчик кнопки "Пройти тест снова"
+        // Take test again button handler
         resetBtn.addEventListener('click', function() {
-            // Сбрасываем ответы
+            // Reset answers
             for (const key in answers) {
                 delete answers[key];
             }
             
-            // Сбрасываем выбранные радиокнопки
+            // Reset selected radio buttons
             const radioButtons = form.querySelectorAll('input[type="radio"]');
             for (const radio of radioButtons) {
                 radio.checked = false;
             }
             
-            // Сбрасываем отметки о прохождении
+            // Reset progress indicators
             for (const dot of progressDots) {
                 dot.classList.remove('answered');
             }
             
-            // Возвращаемся к первому вопросу
+            // Go back to first question
             goToQuestion(1);
             
-            // Скрываем результаты и показываем тест
+            // Hide results and show test
             testResult.style.display = 'none';
             testContent.style.display = 'block';
         });
         
-        // Инициализация
+        // Initialize
         updateNavButtons();
     });
 </script>

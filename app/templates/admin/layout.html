@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block admin_title %}Панель администратора - ProgStart{% endblock %}</title>
+    <title>{% block admin_title %}Admin Panel - ProgStart{% endblock %}</title>
     <link rel="stylesheet" href="/static/css/main.css">
     <link rel="stylesheet" href="/static/css/admin.css">
     {% block admin_head %}{% endblock %}
@@ -13,7 +13,7 @@
         <aside class="admin-sidebar">
             <div class="admin-logo">
                 <a href="/">ProgStart</a>
-                <div class="admin-logo-subtitle">Панель администратора</div>
+                <div class="admin-logo-subtitle">Admin Panel</div>
             </div>
             
             <nav class="admin-nav">
@@ -21,38 +21,38 @@
                     <li class="admin-nav-item">
                         <a href="/admin" class="admin-nav-link {% if request.url.path == '/admin' %}active{% endif %}">
                             <span class="admin-nav-icon">📊</span>
-                            Главная
+                            Dashboard
                         </a>
                     </li>
                     <li class="admin-nav-item">
                         <a href="/admin/users" class="admin-nav-link {% if request.url.path == '/admin/users' %}active{% endif %}">
                             <span class="admin-nav-icon">👥</span>
-                            Пользователи
+                            Users
                         </a>
                     </li>
                     <li class="admin-nav-item">
                         <a href="/admin/tests" class="admin-nav-link {% if request.url.path == '/admin/tests' %}active{% endif %}">
                             <span class="admin-nav-icon">📝</span>
-                            Тесты
+                            Tests
                         </a>
                     </li>
                 </ul>
             </nav>
             
             <div class="admin-footer">
-                <a href="/" class="admin-back-link">Вернуться на сайт</a>
+                <a href="/" class="admin-back-link">Return to Website</a>
             </div>
         </aside>
         
         <main class="admin-content">
             <div class="admin-header">
                 <div class="admin-header-title">
-                    <h1 class="admin-title">{% block admin_page_title %}Панель администратора{% endblock %}</h1>
+                    <h1 class="admin-title">{% block admin_page_title %}Admin Panel{% endblock %}</h1>
                 </div>
                 
                 <div class="admin-user-info">
                     <span class="admin-username">{{ user.username }}</span>
-                    <button id="admin-logout-btn" class="admin-logout-btn">Выйти</button>
+                    <button id="admin-logout-btn" class="admin-logout-btn">Logout</button>
                 </div>
             </div>
             
@@ -63,7 +63,7 @@
     </div>
 
     <script>
-        // Функция для выхода из системы
+        // Logout function
         document.addEventListener('DOMContentLoaded', function() {
             const logoutBtn = document.getElementById('admin-logout-btn');
             if (logoutBtn) {
@@ -80,10 +80,10 @@
                         if (response.ok) {
                             window.location.href = '/login';
                         } else {
-                            alert('Ошибка при выходе из системы');
+                            alert('Error during logout');
                         }
                     } catch (error) {
-                        console.error('Ошибка:', error);
+                        console.error('Error:', error);
                     }
                 });
             }

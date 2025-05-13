@@ -36,24 +36,24 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
     to_encode.update({"exp": expire, "sub": data.get("sub")})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-# Получение токена из куки или заголовка
+# Get token from cookie or header
 async def get_token_from_cookie_or_header(
     request: Request = None,
     token: Optional[str] = Depends(oauth2_scheme),
     access_token: Optional[str] = Cookie(None)
 ) -> Optional[str]:
-    # Сначала проверяем заголовок Authorization
+    # First check Authorization header
     if token:
         return token
     
-    # Затем проверяем куки
+    # Then check cookies
     if access_token:
-        # Удаляем 'Bearer ' из куки, если оно есть
+        # Remove 'Bearer ' from cookie if present
         if access_token.startswith("Bearer "):
             return access_token[7:]
         return access_token
     
-    # Если токен не найден, возвращаем None
+    # If no token found, return None
     return None
 
 async def get_current_user(
@@ -62,7 +62,7 @@ async def get_current_user(
 ):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Не удалось подтвердить учетные данные",
+        detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
     
@@ -87,5 +87,5 @@ async def get_current_active_user(
     current_user: models.User = Depends(get_current_user),
 ):
     if not current_user.is_active:
-        raise HTTPException(status_code=400, detail="Неактивный пользователь")
+        raise HTTPException(status_code=400, detail="Inactive user")
     return current_user

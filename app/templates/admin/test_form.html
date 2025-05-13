@@ -1,12 +1,12 @@
 {% extends "admin/layout.html" %}
 
-{% block admin_title %}{% if test %}Редактирование теста{% else %}Создание теста{% endif %} - Панель администратора{% endblock %}
+{% block admin_title %}{% if test %}Edit Test{% else %}Create Test{% endif %} - Admin Panel{% endblock %}
 
-{% block admin_page_title %}{% if test %}Редактирование теста{% else %}Создание теста{% endif %}{% endblock %}
+{% block admin_page_title %}{% if test %}Edit Test{% else %}Create Test{% endif %}{% endblock %}
 
 {% block admin_head %}
 <style>
-    /* Дополнительные стили для формы теста */
+    /* Additional styles for test form */
     .question-container {
         border: 1px solid var(--border-color);
         border-radius: 8px;
@@ -50,6 +50,18 @@
         color: var(--danger-color);
         cursor: pointer;
     }
+
+    /* Textarea styles for multiline content */
+    .question-text-area {
+        width: 100%;
+        min-height: 100px;
+        padding: 10px;
+        border: 1px solid var(--border-color);
+        border-radius: 5px;
+        font-family: inherit;
+        font-size: inherit;
+        resize: vertical;
+    }
 </style>
 {% endblock %}
 
@@ -57,32 +69,32 @@
 <div class="admin-test-form-container">
     <form id="test-form" class="admin-form">
         <div class="admin-form-group">
-            <label for="test-title">Название теста</label>
+            <label for="test-title">Test Title</label>
             <input type="text" id="test-title" name="title" class="admin-form-control" required value="{{ test.title if test else '' }}">
         </div>
         
         <div class="admin-form-group">
-            <label for="test-description">Описание</label>
+            <label for="test-description">Description</label>
             <textarea id="test-description" name="description" class="admin-form-control" rows="3">{{ test.description if test else '' }}</textarea>
         </div>
         
-        <h3>Вопросы</h3>
+        <h3>Questions</h3>
         <div id="questions-container">
             {% if test %}
                 {% for question in test.questions %}
                     <div class="question-container" data-question-id="{{ question.id }}">
                         <div class="question-header">
-                            <h4>Вопрос {{ loop.index }}</h4>
+                            <h4>Question {{ loop.index }}</h4>
                             <span class="btn-remove-question">&times;</span>
                         </div>
                         
                         <div class="admin-form-group">
-                            <label>Текст вопроса</label>
-                            <input type="text" class="admin-form-control question-text" value="{{ question.text }}" required>
+                            <label>Question Text</label>
+                            <textarea class="admin-form-control question-text question-text-area" required>{{ question.text }}</textarea>
                         </div>
                         
                         <div class="admin-form-group">
-                            <label>Варианты ответов</label>
+                            <label>Answer Options</label>
                             <div class="options-container">
                                 {% for option in question.options %}
                                     <div class="option-container" data-option-id="{{ option.id }}">
@@ -94,18 +106,18 @@
                                     </div>
                                 {% endfor %}
                             </div>
-                            <button type="button" class="btn btn-outline btn-add-option">Добавить вариант</button>
+                            <button type="button" class="btn btn-outline btn-add-option">Add Option</button>
                         </div>
                     </div>
                 {% endfor %}
             {% endif %}
         </div>
         
-        <button type="button" id="add-question-btn" class="btn">Добавить вопрос</button>
+        <button type="button" id="add-question-btn" class="btn">Add Question</button>
         
         <div class="admin-form-buttons">
-            <a href="/admin/tests" class="btn admin-btn-cancel">Отмена</a>
-            <button type="submit" class="btn btn-success admin-btn-save">Сохранить</button>
+            <a href="/admin/tests" class="btn admin-btn-cancel">Cancel</a>
+            <button type="submit" class="btn btn-success admin-btn-save">Save</button>
         </div>
     </form>
 </div>
@@ -118,41 +130,41 @@
         const addQuestionBtn = document.getElementById('add-question-btn');
         const testForm = document.getElementById('test-form');
         
-        // Счетчик для новых вопросов
+        // Counter for new questions
         let questionCounter = {{ test.questions|length if test else 0 }};
         
-        // Функция для добавления нового вопроса
+        // Function to add a new question
         function addQuestion() {
             questionCounter++;
             
             const questionId = `new_${questionCounter}`;
             
-            // Создаем контейнер для вопроса
+            // Create container for the question
             const questionContainer = document.createElement('div');
             questionContainer.className = 'question-container';
             questionContainer.dataset.questionId = questionId;
             
-            // Заголовок вопроса с кнопкой удаления
+            // Question header with remove button
             const questionHeader = document.createElement('div');
             questionHeader.className = 'question-header';
             questionHeader.innerHTML = `
-                <h4>Вопрос ${questionCounter}</h4>
+                <h4>Question ${questionCounter}</h4>
                 <span class="btn-remove-question">&times;</span>
             `;
             
-            // Группа для текста вопроса
+            // Group for question text
             const questionTextGroup = document.createElement('div');
             questionTextGroup.className = 'admin-form-group';
             questionTextGroup.innerHTML = `
-                <label>Текст вопроса</label>
-                <input type="text" class="admin-form-control question-text" required>
+                <label>Question Text</label>
+                <textarea class="admin-form-control question-text question-text-area" required></textarea>
             `;
             
-            // Группа для вариантов ответов
+            // Group for answer options
             const optionsGroup = document.createElement('div');
             optionsGroup.className = 'admin-form-group';
             optionsGroup.innerHTML = `
-                <label>Варианты ответов</label>
+                <label>Answer Options</label>
                 <div class="options-container">
                     <div class="option-container">
                         <input type="radio" class="option-radio" name="correct_${questionId}" checked>
@@ -163,27 +175,27 @@
                         <input type="text" class="admin-form-control option-input" required>
                     </div>
                 </div>
-                <button type="button" class="btn btn-outline btn-add-option">Добавить вариант</button>
+                <button type="button" class="btn btn-outline btn-add-option">Add Option</button>
             `;
             
-            // Собираем вопрос вместе
+            // Assemble the question together
             questionContainer.appendChild(questionHeader);
             questionContainer.appendChild(questionTextGroup);
             questionContainer.appendChild(optionsGroup);
             
-            // Добавляем в контейнер вопросов
+            // Add to questions container
             questionsContainer.appendChild(questionContainer);
             
-            // Добавляем обработчики событий
+            // Add event listeners
             addQuestionEventListeners(questionContainer);
         }
         
-        // Функция для добавления нового варианта ответа
+        // Function to add a new answer option
         function addOption(optionsContainer) {
             const optionContainer = document.createElement('div');
             optionContainer.className = 'option-container';
             
-            // Получаем имя радио-кнопки из первого варианта ответа
+            // Get radio name from the first option
             const firstOption = optionsContainer.querySelector('.option-container');
             const radioName = firstOption.querySelector('.option-radio').name;
             
@@ -195,22 +207,22 @@
             
             optionsContainer.appendChild(optionContainer);
             
-            // Добавляем обработчик события для кнопки удаления
+            // Add event listener for remove button
             const removeBtn = optionContainer.querySelector('.btn-remove-option');
             removeBtn.addEventListener('click', function() {
                 optionContainer.remove();
             });
         }
         
-        // Функция для добавления обработчиков событий к элементам вопроса
+        // Function to add event listeners to question elements
         function addQuestionEventListeners(questionContainer) {
-            // Обработчик для кнопки удаления вопроса
+            // Handler for remove question button
             const removeQuestionBtn = questionContainer.querySelector('.btn-remove-question');
             removeQuestionBtn.addEventListener('click', function() {
                 questionContainer.remove();
             });
             
-            // Обработчик для кнопки добавления варианта ответа
+            // Handler for add option button
             const addOptionBtn = questionContainer.querySelector('.btn-add-option');
             const optionsContainer = questionContainer.querySelector('.options-container');
             
@@ -218,7 +230,7 @@
                 addOption(optionsContainer);
             });
             
-            // Обработчики для кнопок удаления вариантов ответа
+            // Handlers for remove option buttons
             const removeOptionBtns = questionContainer.querySelectorAll('.btn-remove-option');
             removeOptionBtns.forEach(btn => {
                 btn.addEventListener('click', function() {
@@ -227,29 +239,29 @@
             });
         }
         
-        // Добавляем обработчики событий к существующим вопросам
+        // Add event listeners to existing questions
         const existingQuestions = document.querySelectorAll('.question-container');
         existingQuestions.forEach(questionContainer => {
             addQuestionEventListeners(questionContainer);
         });
         
-        // Обработчик для кнопки добавления вопроса
+        // Handler for add question button
         addQuestionBtn.addEventListener('click', addQuestion);
         
-        // Если нет вопросов, добавляем первый вопрос
+        // If there are no questions, add the first one
         if (questionCounter === 0) {
             addQuestion();
         }
         
-        // Обработчик отправки формы
+        // Form submit handler
         testForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            // Собираем данные формы
+            // Collect form data
             const title = document.getElementById('test-title').value;
             const description = document.getElementById('test-description').value;
             
-            // Собираем вопросы
+            // Collect questions
             const questions = [];
             const questionContainers = document.querySelectorAll('.question-container');
             
@@ -257,7 +269,7 @@
                 const questionId = questionContainer.dataset.questionId;
                 const questionText = questionContainer.querySelector('.question-text').value;
                 
-                // Собираем варианты ответов
+                // Collect answer options
                 const options = [];
                 const optionContainers = questionContainer.querySelectorAll('.option-container');
                 let correctOptionIndex = 0;
@@ -270,7 +282,7 @@
                         correctOptionIndex = index;
                     }
                     
-                    // Добавляем ID варианта, если он есть
+                    // Add option ID if it exists
                     const optionId = optionContainer.dataset.optionId;
                     if (optionId) {
                         options.push({
@@ -284,14 +296,14 @@
                     }
                 });
                 
-                // Формируем объект вопроса
+                // Form question object
                 const question = {
                     text: questionText,
                     options: options,
                     correct_option_index: correctOptionIndex
                 };
                 
-                // Добавляем ID вопроса, если он есть
+                // Add question ID if it exists
                 if (questionId && !questionId.startsWith('new_')) {
                     question.id = parseInt(questionId);
                 }
@@ -299,14 +311,14 @@
                 questions.push(question);
             });
             
-            // Формируем данные для отправки
+            // Form test data for submission
             const testData = {
                 title: title,
                 description: description,
                 questions: questions
             };
             
-            // Определяем URL и метод
+            // Determine URL and method
             {% if test %}
                 const url = `/admin/tests/{{ test.id }}`;
                 const method = 'PUT';
@@ -326,15 +338,15 @@
                 });
                 
                 if (response.ok) {
-                    // Перенаправляем на страницу со списком тестов
+                    // Redirect to tests list
                     window.location.href = '/admin/tests';
                 } else {
                     const error = await response.json();
-                    alert(`Ошибка: ${error.detail || 'Произошла ошибка при сохранении теста'}`);
+                    alert(`Error: ${error.detail || 'An error occurred while saving the test'}`);
                 }
             } catch (error) {
-                console.error('Ошибка:', error);
-                alert('Произошла ошибка при сохранении теста');
+                console.error('Error:', error);
+                alert('An error occurred while saving the test');
             }
         });
     });

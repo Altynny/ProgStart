@@ -10,11 +10,11 @@ from ..crud import get_tests, get_test, get_user_progress
 
 router = APIRouter(tags=["pages"])
 
-# Получаем шаблонизатор из состояния приложения
+# Get templates from application state
 def get_templates(request: Request) -> Jinja2Templates:
     return request.app.state.templates
 
-# Функция для получения текущего пользователя (если он авторизован)
+# Function to get current user (if authenticated)
 async def get_optional_user(
     db: Session = Depends(get_db),
     token: Optional[str] = Depends(auth.get_token_from_cookie_or_header)
@@ -27,7 +27,7 @@ async def get_optional_user(
     except HTTPException:
         return None
 
-# Главная страница с таблицей лидеров
+# Home page with leaderboard
 @router.get("/", response_class=HTMLResponse)
 async def home_page(
     request: Request, 
@@ -35,7 +35,7 @@ async def home_page(
     current_user: Optional[models.User] = Depends(get_optional_user),
     templates: Jinja2Templates = Depends(get_templates)
 ):
-    # Получаем таблицу лидеров
+    # Get leaderboard
     leaders = db.query(
         models.User.username,
         func.sum(models.Progress.score).label("total_score")
@@ -47,7 +47,7 @@ async def home_page(
         func.sum(models.Progress.score).desc()
     ).all()
     
-    # Преобразуем в список словарей
+    # Convert to list of dictionaries
     leaders_list = [{"username": username, "total_score": total_score} for username, total_score in leaders]
     
     return templates.TemplateResponse(
@@ -55,7 +55,7 @@ async def home_page(
         {"request": request, "leaders": leaders_list, "user": current_user}
     )
 
-# Страница списка тестов
+# Tests list page
 @router.get("/tests", response_class=HTMLResponse)
 async def tests_list_page(
     request: Request, 
@@ -69,7 +69,7 @@ async def tests_list_page(
         {"request": request, "tests": tests, "user": current_user}
     )
 
-# Страница теста
+# Test page
 @router.get("/tests/{test_id}", response_class=HTMLResponse)
 async def test_page(
     test_id: int,
@@ -78,15 +78,15 @@ async def test_page(
     current_user: Optional[models.User] = Depends(get_optional_user),
     templates: Jinja2Templates = Depends(get_templates)
 ):
-    # Если пользователь не авторизован, перенаправляем на страницу входа
+    # If user is not authenticated, redirect to login page
     if not current_user:
         return RedirectResponse(url="/login?next=/tests/" + str(test_id), status_code=302)
     
     test = get_test(db, test_id)
     if not test:
-        raise HTTPException(status_code=404, detail="Тест не найден")
+        raise HTTPException(status_code=404, detail="Test not found")
     
-    # Устанавливаем cookie с ID теста
+    # Set cookie with test ID
     response = templates.TemplateResponse(
         "test_page.html", 
         {"request": request, "test": test, "user": current_user}
@@ -95,7 +95,7 @@ async def test_page(
     
     return response
 
-# Страница профиля
+# Profile page
 @router.get("/profile", response_class=HTMLResponse)
 async def profile_page(
     request: Request, 
@@ -103,25 +103,25 @@ async def profile_page(
     current_user: Optional[models.User] = Depends(get_optional_user),
     templates: Jinja2Templates = Depends(get_templates)
 ):
-    # Если пользователь не авторизован, перенаправляем на страницу входа
+    # If user is not authenticated, redirect to login page
     if not current_user:
         return RedirectResponse(url="/login?next=/profile", status_code=302)
     
-    # Получаем прогресс пользователя
+    # Get user's progress
     progress = get_user_progress(db, current_user.id)
     
-    # Получаем все тесты
+    # Get all tests
     tests = get_tests(db)
     tests_dict = {test.id: test for test in tests}
     
-    # Группируем прогресс по тестам
+    # Group progress by tests
     grouped_progress = {}
     for p in progress:
         if p.test_id not in grouped_progress:
             grouped_progress[p.test_id] = []
         grouped_progress[p.test_id].append(p)
     
-    # Подсчитываем общее количество баллов
+    # Calculate total score
     total_score = sum(p.score for p in progress)
     
     return templates.TemplateResponse(
@@ -135,7 +135,7 @@ async def profile_page(
         }
     )
 
-# Страница входа
+# Login page
 @router.get("/login", response_class=HTMLResponse)
 async def login_page(
     request: Request,
@@ -143,7 +143,7 @@ async def login_page(
     templates: Jinja2Templates = Depends(get_templates),
     current_user: Optional[models.User] = Depends(get_optional_user)
 ):
-    # Если пользователь уже авторизован, перенаправляем его
+    # If user is already authenticated, redirect
     if current_user:
         return RedirectResponse(url="/", status_code=302)
     
@@ -152,14 +152,14 @@ async def login_page(
         {"request": request, "next": next, "user": None}
     )
 
-# Страница регистрации
+# Registration page
 @router.get("/register", response_class=HTMLResponse)
 async def register_page(
     request: Request,
     templates: Jinja2Templates = Depends(get_templates),
     current_user: Optional[models.User] = Depends(get_optional_user)
 ):
-    # Если пользователь уже авторизован, перенаправляем его
+    # If user is already authenticated, redirect
     if current_user:
         return RedirectResponse(url="/", status_code=302)
     

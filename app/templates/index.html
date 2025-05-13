@@ -1,27 +1,27 @@
 {% extends "layout.html" %}
 
-{% block title %}ProgStart - Главная страница{% endblock %}
+{% block title %}ProgStart - Home{% endblock %}
 
 {% block content %}
 <div class="container home-container">
     <section class="hero-section">
         <h1 class="hero-title">ProgStart</h1>
         <p class="hero-subtitle">
-            Проверьте свои знания программирования и соревнуйтесь с другими разработчиками
+            Test your programming knowledge and compete with other developers
         </p>
-        <a href="/tests" class="btn btn-large">ПРИСТУПИТЬ К ТЕСТАМ</a>
+        <a href="/tests" class="btn btn-large">START TESTING</a>
     </section>
     
     <section class="leaderboard-section">
         <div class="leaderboard-container">
-            <h2 class="leaderboard-title">Таблица лидеров</h2>
+            <h2 class="leaderboard-title">Leaderboard</h2>
             {% if leaders %}
                 <table class="table leaderboard-table">
                     <thead>
                         <tr>
-                            <th>Место</th>
-                            <th>Пользователь</th>
-                            <th>Баллы</th>
+                            <th>Rank</th>
+                            <th>User</th>
+                            <th>Score</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -35,35 +35,35 @@
                     </tbody>
                 </table>
             {% else %}
-                <p class="no-leaders">Пока нет данных. Станьте первым лидером!</p>
+                <p class="no-leaders">No data yet. Be the first leader!</p>
             {% endif %}
         </div>
     </section>
     
     <section class="features-section">
-        <h2 class="section-title">Почему ProgStart?</h2>
+        <h2 class="section-title">Why ProgStart?</h2>
         <div class="features-container">
             <div class="feature-card">
                 <div class="feature-icon">📝</div>
-                <h3 class="feature-title">Разнообразные тесты</h3>
+                <h3 class="feature-title">Diverse Tests</h3>
                 <p class="feature-description">
-                    Широкий выбор тестов по различным языкам программирования и технологиям
+                    Wide selection of tests covering various programming languages and technologies
                 </p>
             </div>
             
             <div class="feature-card">
                 <div class="feature-icon">📈</div>
-                <h3 class="feature-title">Отслеживание прогресса</h3>
+                <h3 class="feature-title">Track Progress</h3>
                 <p class="feature-description">
-                    Наблюдайте за своим ростом и сравнивайте результаты с другими пользователями
+                    Monitor your growth and compare results with other users
                 </p>
             </div>
             
             <div class="feature-card">
                 <div class="feature-icon">🏆</div>
-                <h3 class="feature-title">Соревнование</h3>
+                <h3 class="feature-title">Competition</h3>
                 <p class="feature-description">
-                    Попадите в таблицу лидеров и получите признание сообщества
+                    Make it to the leaderboard and gain recognition from the community
                 </p>
             </div>
         </div>

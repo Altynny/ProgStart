@@ -1,18 +1,18 @@
 {% extends "layout.html" %}
 
-{% block title %}ProgStart - Вход в систему{% endblock %}
+{% block title %}ProgStart - Login{% endblock %}
 
 {% block content %}
 <div class="container auth-page-container">
     <div class="auth-page-content">
         <div class="auth-form-container">
-            <h2 class="auth-title">Вход в систему</h2>
+            <h2 class="auth-title">Login</h2>
             
             <div id="auth-error" class="auth-error" style="display: none;"></div>
             
             <form id="login-form" class="auth-form">
                 <div class="form-group">
-                    <label for="username">Имя пользователя</label>
+                    <label for="username">Username</label>
                     <input
                         type="text"
                         id="username"
@@ -23,7 +23,7 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="password">Пароль</label>
+                    <label for="password">Password</label>
                     <input
                         type="password"
                         id="password"
@@ -36,16 +36,16 @@
                 <input type="hidden" id="next" name="next" value="{{ next }}">
                 
                 <button type="submit" class="btn auth-button">
-                    Войти
+                    Login
                 </button>
             </form>
         </div>
         
         <div class="auth-alternative">
             <p>
-                Нет аккаунта?
+                Don't have an account?
                 <a href="/register" class="auth-link">
-                    Зарегистрироваться
+                    Register
                 </a>
             </p>
         </div>
@@ -67,13 +67,13 @@
             const password = document.getElementById('password').value;
             const next = nextInput.value || '/';
             
-            // Создаем FormData для отправки
+            // Create FormData for submission
             const formData = new FormData();
             formData.append('username', username);
             formData.append('password', password);
             
             try {
-                // Отправляем запрос на сервер
+                // Send request to server
                 const response = await fetch('/token', {
                     method: 'POST',
                     body: formData,
@@ -81,16 +81,16 @@
                 });
                 
                 if (response.ok) {
-                    // Перенаправляем пользователя
+                    // Redirect user
                     window.location.href = next;
                 } else {
                     const error = await response.json();
-                    authError.textContent = error.detail || 'Ошибка входа';
+                    authError.textContent = error.detail || 'Login error';
                     authError.style.display = 'block';
                 }
             } catch (error) {
-                console.error('Ошибка:', error);
-                authError.textContent = 'Произошла ошибка при входе';
+                console.error('Error:', error);
+                authError.textContent = 'An error occurred during login';
                 authError.style.display = 'block';
             }
         });

@@ -11,26 +11,26 @@ class UserRegistrationResponse(schemas.BaseModel):
 @router.post("/register", response_model=UserRegistrationResponse)
 async def register(user: schemas.UserIn, db: Session = Depends(get_db)):
     """
-    Регистрация нового пользователя
+    Register a new user
     """
     db_user = crud.get_user_by_username(db, user.username)
     if db_user:
-        raise HTTPException(status_code=409, detail="Имя пользователя уже занято")
+        raise HTTPException(status_code=409, detail="Username already taken")
     crud.create_user(db, user)
-    return {"message": "Пользователь успешно зарегистрирован"}
+    return {"message": "User registered successfully"}
 
 @router.post("/logout")
 async def logout(response: Response):
     """
-    Выход из системы (удаление токена из куки)
+    Log out (remove token cookie)
     """
-    # Очищаем куки с токеном
+    # Clear token cookie
     response.delete_cookie(key="access_token")
-    return {"message": "Вы успешно вышли из системы"}
+    return {"message": "Logged out successfully"}
 
 @router.get("/me", response_model=schemas.UserOut)
 async def read_users_me(current_user = Depends(auth.get_current_active_user)):
     """
-    Получение информации о текущем пользователе
+    Get current user information
     """
     return current_user
